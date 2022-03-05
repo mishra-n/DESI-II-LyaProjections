@@ -49,13 +49,16 @@ class Spectrograph(object):
 
         return SNR_func
     
-    def P_Nn(self, t, r, z):
+    def P_Nn(self, t, r, z, SNR=None):
         """
         Eq 3 in McQuinn, White (2011): Noise power calculated from SNR per pixel as function of redshift and mean flux
         """
 
         delta_lambda = 1
-
-        P_Nn = 0.8 * tLya.meanFlux(z)**(-2) * self.snr(t, r, z)**(-2) * delta_lambda * ((1+z)/4)**(-3/2)
+        
+        if SNR is None:
+            P_Nn = 0.8 * tLya.meanFlux(z)**(-2) * self.snr(t, r, z)**(-2) * delta_lambda * ((1+z)/4)**(-3/2)
+        else:
+            P_Nn = 0.8 * tLya.meanFlux(z)**(-2) * SNR**(-2) * delta_lambda * ((1+z)/4)**(-3/2)
 
         return P_Nn

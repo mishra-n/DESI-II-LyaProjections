@@ -16,9 +16,12 @@ class effectiveStatistics(object):
         self.Survey = Survey
         self.Spectrograph = Spectrograph
        
-    def v_n(self, t, r, z, k):
+    def v_n(self, t, r, z, k, SNR=None):
         P = self.theoryLya.FluxP1D_PD2013_hMpc(z, k)
-        P_Nn = self.Spectrograph.P_Nn(t, r, z)
+        if SNR is None:
+            P_Nn = self.Spectrograph.P_Nn(t, r, z)
+        else:
+            P_Nn = self.Spectrograph.P_Nn(t, r, z, SNR=SNR)
         
         return P / (P_Nn + P)
     

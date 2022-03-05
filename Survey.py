@@ -13,7 +13,9 @@ class Survey(object):
     nzr file: gives the number density of quasars per sq degree as a function of redshift and z """ #ADD QLF functionality later
     
     
-    def __init__(self, nzr_file, survey_A, cosmo=None):
+    def __init__(self, from_file=True, nzr_file='./nzs/nzr_qso.dat', survey_A=16000, cosmo=None, z_bins=np.arange(2, 5, .25), r_bins=np.arange(19.25, 23.75, .5)):
+        
+        if from_file is True:
             x = np.genfromtxt(nzr_file, skip_header=7)
             self.nzr = x[:,2]
             self.zs = x[:,0]
@@ -29,9 +31,15 @@ class Survey(object):
                 self.zref=cosmo.pk_zref
             else:
                 self.zref=2.25
-                self.cosmo=cCAMB.Cosmology(self.zref)            
+                self.cosmo=cCAMB.Cosmology(self.zref)
+        else:
+            n_zr = np.zeros(shape=(rs.shape[0], zs.shape[0]))
             
-    def quasar_comoving_space_density_temp(self, Mg, z):
+            for i,z in enumerate(z_bins):
+                n_zr[:,i] = np.sum(self.quasarComovingSpaceDensity(r_bins, z)) 
+            
+            
+    def quasarComovingSpaceDensity(self, Mg, z):
 
         Phi_star = 10**(-6.01)
         Mg_star_zp = -26.71
@@ -53,6 +61,21 @@ class Survey(object):
 
         Phi = Phi_star / (10**(0.4*(alpha + 1)*(Mg - Mg_star)) + 10**(0.4*(beta + 1)*(Mg - Mg_star)))
 
-        return Phi           
+        return Phi
+    
+    def n_rz():
+        if z_bins==None and r_bins==None:
             
+            n_rz = np.zeros(shape=(rs.shape[0], zs.shape[0]))
+
+            Mg_space = np.linspace(Mg_min, Mg_max, dMgs)
+
+            for i,z in enumerate(zs):
+                n_z[i] = np.sum(self.quasarComovingSpaceDensity(Mg_space, z) * dMgs)
+
+        return n_z
             
+        
+        
+        
+    
