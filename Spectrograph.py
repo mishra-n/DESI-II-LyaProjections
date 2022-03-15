@@ -8,7 +8,7 @@ class Spectrograph(object):
     """
     Spectrograph statistics
     """
-    def __init__(self, snr_path):
+    def __init__(self, theoryLya, snr_path):
         #function for spectrograph snr as a function of integration time, r-magnitude of quasar, redshift of quasar
         self.snr = self.SNR(snr_path)
 

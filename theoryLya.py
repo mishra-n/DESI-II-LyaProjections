@@ -28,7 +28,7 @@ class theoryLya(object):
             self.cosmo=cosmo
             self.zref=cosmo.pk_zref
         else:
-            self.zref=2.25
+            self.zref=2.3
             self.cosmo=cCAMB.Cosmology(self.zref)
 
         # get linear power spectrum 
@@ -67,7 +67,7 @@ class theoryLya(object):
             P_hMpc *= pow(np.sin(kpix/2)/(kpix/2),2)
         return P_hMpc
 
-    def FluxP3D_McD2003_kpkp_hMpc(self, z, k_perp, k_par, linear=True, k_star = np.inf):
+    def FluxP3D_McD2003_kpkp_hMpc(self, z, k_perp, k_par, linear=False, k_star = np.inf):
         """
         3D power spectrum P_F(z, k_perp, kpar)
         
@@ -91,4 +91,10 @@ class theoryLya(object):
             
             p1d[i] = integrate.quad(integrand, 0, np.inf)[0]
         return p1d
+    
+    def meanFlux(self, z):
+        tau_eff = 2.53e-3 * (1+z)**3.7
+        mean_F = np.exp(-tau_eff)
+        return mean_F
+        
     

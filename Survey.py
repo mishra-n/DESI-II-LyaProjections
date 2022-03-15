@@ -16,14 +16,19 @@ class Survey(object):
     def __init__(self, from_file=True, nzr_file='./nzs/nzr_qso.dat', survey_A=16000, cosmo=None, z_bins=np.arange(2, 5, .25), r_bins=np.arange(19.25, 23.75, .5)):
         
         if from_file is True:
-            x = np.genfromtxt(nzr_file, skip_header=7)
-            self.nzr = x[:,2]
+            x = np.genfromtxt(nzr_file, skip_header=3)
+            self.nzr_temp = x[:,2]
             self.zs = x[:,0]
             self.rs = x[:,1]
             self.z_bins = np.unique(self.zs)
             self.r_bins = np.unique(self.rs)
             self.dz = self.z_bins[1] - self.z_bins[0]
             self.dr = self.r_bins[1] - self.r_bins[0]
+            
+            self.nzr = np.zeros(shape=(self.z_bins.shape[0], self.r_bins.shape[0]))
+            for i, z_val in enumerate(self.z_bins):
+                for j, r_val in enumerate(self.r_bins):
+                    self.nzr[i,j] = self.nzr_temp[np.logical_and(self.zs==z_val, self.rs==r_val)]
             
             self.surveyArea = survey_A
             if cosmo:

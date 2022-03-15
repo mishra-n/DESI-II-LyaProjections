@@ -5,9 +5,9 @@ import numpy as np
 import scipy.integrate as integrate
 import scipy.interpolate as interp
 
-redshifts = np.arange(1, 5.25, .25)
-chimps = np.array([4754, 5569, 6275, 6901, 7450, 7939, 8378, 8775, 9132, 9463, 9765, 10043, 10299, 10540, 10761, 10972, 11165])
-angular_diameter = interp.interp1d(redshifts, chimps)
+#redshifts = np.array([.2, .35, .5, .75, 1,1.25,1.5,1.75,2,2.25,2.5,2.75,3,3.25,3.5,3.75,4, 4.25,4.5,4.75,5])
+#chimps = np.array([1185.16, 1986.9, 2731.93, 3827.05, 4754, 5569, 6275, 6901, 7450, 7939, 8378, 8775, 9132, 9463, 9765, 10043, 10299, 10540, 10761, 10972, 11165])
+#angular_diameter = interp.interp1d(redshifts, chimps)
 
 class effectiveStatistics(object):
     
@@ -25,21 +25,40 @@ class effectiveStatistics(object):
         
         return P / (P_Nn + P)
     
-    def n_eff_trz(self, k, t_range = np.arange(1000,13000,1000), r_range = None, z_range = None):
-        if r_range == None:
-            r_range = self.Survey.r_bins
-        if z_range == None:
-            z_range = self.Survey.z_bins
         
-        n_eff_trz = np.zeros(shape=(t_range.shape[0], r_bins.shape[0], z_range.shape[0]))
+    def n_eff_trz(self, k_val, t_range = np.arange(1000,13000,1000)):
+        r_range = self.Survey.r_bins
+        z_range = self.Survey.z_bins
+
+        n_eff_trz = np.zeros(shape=(t_range.shape[0], r_range.shape[0], z_range.shape[0]))
         
         for i, t_val in enumerate(t_range):
-            for j, r_val in enumerate(r_range):
-                for k, z_val in enumerate(z_range):
-                    v_n_value * self.v_n(t_val, r_val, z_val, k) * self.Survey.dz * self.Survey.dr
+            for k, z_val in enumerate(z_range):
+                for j, r_val in enumerate(r_range):
+                #for k, z_val in enumerate(z_range):
+                    nzr_val = self.Survey.nzr[k,j]
+                    #print(nzr_val)
+                    v_n_val = self.v_n(t_val, r_val, z_val, k_val) * nzr_val * self.Survey.surveyArea* self.Survey.dz * self.Survey.dr
                     
-                    term = v_n_val / (angular_diameter(z_val))**2
+                    area = self.theoryLya.cosmo.A(z_val, self.Survey.surveyArea)
                     
+                    term = v_n_val / area
                     n_eff_trz[i,j,k] = term
                     
-        return n_eff_trz, t_range, r_range, z_range
+        return n_eff_trz
+    
+    def V_eff_kmtrz(self, k, mu, n_eff_trz, k_los):
+        Plos = self.theoryLya.FluxP1D_McD2003_hMpc(k_los, self.Survey.z_bins)
+        
+        V = np.zeros(shape=(len(k), len(mu), n_eff_trz.shape[0], n_eff_trz.shape[1], n_eff_trz.shape[2]))
+        
+        for i,k_val in enumerate(k):
+            for j, mu_val in enumerate(mu):
+                Pk = self.theoryLya.FluxP3D_McD2003_hMpc(z=self.Survey.z_bins, k_hMpc=k_val, mu=mu_val)
+                volume = self.theoryLya.cosmo.V(self.Survey.z_bins, self.Survey.surveyArea, self.Survey.dz)
+                V[i,j,:,:,:] = (Pk[None,None,:] / (Pk[None,None,:] + Plos[None,None,:] / n_eff_trz))**2 * volume[None,None,:]
+                
+        return V
+        
+        
+        
