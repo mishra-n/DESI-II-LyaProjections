@@ -8,9 +8,20 @@ class Spectrograph(object):
     """
     Spectrograph statistics
     """
-    def __init__(self, theoryLya, snr_path):
+    def __init__(self, theoryLya, name='desi'):
         #function for spectrograph snr as a function of integration time, r-magnitude of quasar, redshift of quasar
-        self.snr = self.SNR(snr_path)
+        self.theoryLya = theoryLya
+        self.name = name
+        if self.name is 'desi':
+            path = "/global/homes/n/nishant/DESI2_LyaProjections/DESI-II-lyaforecast/build/lib/desi_SNR/"
+            self.snr = self.SNR(path)
+            self.resolution = 1 #angstroms
+        if self.name is 'weave':
+            self.snr = self.SNR()
+            self.resolution = 2.6 #angstroms (Kraljic et al (2022), 2201.02606)
+            
+            
+        
 
 
     def openSNR(self, data):
@@ -31,34 +42,42 @@ class Spectrograph(object):
 
         return mean_SNR, redshifts
 
-    def SNR(self, path):
-        ts = np.arange(1000,13000,1000)
-        rs = np.arange(19.25, 23.75, .5)
-        zs = np.arange(2, 5, .25)
+    def SNR(self, path=None):
+        if self.name is 'desi':
+            ts = np.arange(1000,13000,1000)
+            rs = np.arange(19.25, 23.75, .5)
+            zs = np.arange(2, 5, .25)
 
-        SNR_arr = []
-        for j, r in enumerate(rs):
-            for i, t in enumerate(ts):
-                file_name = 'toto-r' + str(rs[j]) + '-t' + str(ts[i]) + '-nexp4.dat'
-                SNR_val, wavelengths, redshifts = self.openSNR(path + file_name)
-                mean_SNR, redshifts = self.meanSNR(SNR_val, wavelengths, redshifts)
-                SNR_arr = np.append(SNR_arr, mean_SNR)
+            SNR_arr = []
+            for j, r in enumerate(rs):
+                for i, t in enumerate(ts):
+                    file_name = 'toto-r' + str(rs[j]) + '-t' + str(ts[i]) + '-nexp4.dat'
+                    SNR_val, wavelengths, redshifts = self.openSNR(path + file_name)
+                    mean_SNR, redshifts = self.meanSNR(SNR_val, wavelengths, redshifts)
+                    SNR_arr = np.append(SNR_arr, mean_SNR)
 
-        Ts, Rs, Zs = np.meshgrid(ts, rs, zs)
-        SNR_func = interp.LinearNDInterpolator(list(zip(Ts.flatten(), Rs.flatten(), Zs.flatten())), SNR_arr.flatten())
-
+            Ts, Rs, Zs = np.meshgrid(ts, rs, zs)
+            SNR_func = interp.LinearNDInterpolator(list(zip(Ts.flatten(), Rs.flatten(), Zs.flatten())), SNR_arr.flatten())
+        
+        if self.name is 'weave':
+            file_name = 'weave_SNR.txt'
+            x = np.loadtxt(file_name)
+            snr = x[:,1]
+            r = x[:,0]
+            f_snr_r = interp.interp1d(r, snr)
+            
+            SNR_func = lambda ts, rs, zs : f_snr_r(rs) * np.sqrt(ts)
+                    
         return SNR_func
     
     def P_Nn(self, t, r, z, SNR=None):
         """
         Eq 3 in McQuinn, White (2011): Noise power calculated from SNR per pixel as function of redshift and mean flux
         """
-
-        delta_lambda = 1
         
         if SNR is None:
-            P_Nn = 0.8 * tLya.meanFlux(z)**(-2) * self.snr(t, r, z)**(-2) * delta_lambda * ((1+z)/4)**(-3/2)
+            P_Nn = self.snr(t, r, z)**(-2) * self.resolution / self.theoryLya.cosmo.lya * self.theoryLya.cosmo.H_z(z) #* tLya.meanFlux(z)**(-2)
         else:
-            P_Nn = 0.8 * tLya.meanFlux(z)**(-2) * SNR**(-2) * delta_lambda * ((1+z)/4)**(-3/2)
+            P_Nn = SNR**(-2) * self.resolution / self.theoryLya.cosmo.lya * self.theoryLya.cosmo.H_z(z)
 
         return P_Nn

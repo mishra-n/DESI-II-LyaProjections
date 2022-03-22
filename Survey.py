@@ -3,7 +3,7 @@ import analytic_p1d_PD2013 as p1D
 import theoryLya as tLya
 import cosmoCAMB as cCAMB
 import helper as helper
-
+from astropy.table import Table
 import numpy as np
 import scipy.integrate as integrate
 import scipy.interpolate as interp
@@ -13,15 +13,26 @@ class Survey(object):
     nzr file: gives the number density of quasars per sq degree as a function of redshift and z """ #ADD QLF functionality later
     
     
-    def __init__(self, from_file=True, nzr_file='./nzs/nzr_qso.dat', survey_A=16000, cosmo=None, z_bins=np.arange(2, 5, .25), r_bins=np.arange(19.25, 23.75, .5)):
+    def __init__(self, from_file=1, snr_list='./lya-snr-guadalupe.fits', nzr_file='./nzs/nzr_qso.dat', survey_A=16000, z_range=None, r_range=None, dz=0.2):
         
-        if from_file is True:
+        self.low_lambda = 1041
+        self.high_lambda = 1185
+        
+        if from_file==1:
             x = np.genfromtxt(nzr_file, skip_header=3)
             self.nzr_temp = x[:,2]
             self.zs = x[:,0]
             self.rs = x[:,1]
-            self.z_bins = np.unique(self.zs)
-            self.r_bins = np.unique(self.rs)
+            if z_range is None:
+                self.z_bins = np.unique(self.zs)
+            else:
+                self.z_bins = np.unique(self.zs)[np.logical_and(self.zs <max(z_range), self.zs > min(z_range))]
+                
+            if r_range is None:
+                self.r_bins = np.unique(self.rs)
+            else:
+                self.r_bins = np.unique(self.rs)[np.logical_and(self.rs <max(r_range), self.rs > min(z_range))]
+                
             self.dz = self.z_bins[1] - self.z_bins[0]
             self.dr = self.r_bins[1] - self.r_bins[0]
             
@@ -31,56 +42,28 @@ class Survey(object):
                     self.nzr[i,j] = self.nzr_temp[np.logical_and(self.zs==z_val, self.rs==r_val)]
             
             self.surveyArea = survey_A
-            if cosmo:
-                self.cosmo=cosmo
-                self.zref=cosmo.pk_zref
-            else:
-                self.zref=2.25
-                self.cosmo=cCAMB.Cosmology(self.zref)
-        else:
-            n_zr = np.zeros(shape=(rs.shape[0], zs.shape[0]))
             
-            for i,z in enumerate(z_bins):
-                n_zr[:,i] = np.sum(self.quasarComovingSpaceDensity(r_bins, z)) 
+            self.individualSNR = False
+
+
+                    
+        if from_file==2:
+            self.SNRdata = Table.read(snr_list)
+            self.zs = self.SNRdata['Z']
+            self.rs = 22.25
+            self.dz = 0.2
+            self.dr = 0.5
+
+            self.z_edges = np.arange(self.SNRdata['Z'].min().round(decimals=0), self.SNRdata['Z'].max().round(decimals=0), self.dz)
             
+            self.z_bins = (self.z_edges[:-1] + self.z_edges[1:]) / 2
             
-    def quasarComovingSpaceDensity(self, Mg, z):
-
-        Phi_star = 10**(-6.01)
-        Mg_star_zp = -26.71
-
-        if z < 2.2:
-            alpha = -4.31
-            beta = -1.54
-            k1 = -0.08
-            k2 = -0.40
-
-        if z >= 2.2: 
-            alpha = -3.04
-            beta = -1.38
-            k1 = -0.25
-            k2 = -0.05
-
-
-        Mg_star = Mg_star_zp - 2.5*(k1*(z - 2.2) + k2*(z - 2.2)**2)
-
-        Phi = Phi_star / (10**(0.4*(alpha + 1)*(Mg - Mg_star)) + 10**(0.4*(beta + 1)*(Mg - Mg_star)))
-
-        return Phi
-    
-    def n_rz():
-        if z_bins==None and r_bins==None:
+            self.r_bins = np.unique(self.rs)
+            self.surveyArea = survey_A
             
-            n_rz = np.zeros(shape=(rs.shape[0], zs.shape[0]))
-
-            Mg_space = np.linspace(Mg_min, Mg_max, dMgs)
-
-            for i,z in enumerate(zs):
-                n_z[i] = np.sum(self.quasarComovingSpaceDensity(Mg_space, z) * dMgs)
-
-        return n_z
+            self.individualSNR = True
             
-        
-        
-        
+            n, bin_edges = np.histogram(self.zs, self.z_edges)
+            
+            self.nzr = n[:,None] / self.surveyArea / self.dz / self.dr
     

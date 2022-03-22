@@ -34,9 +34,10 @@ class Cosmology(object):
             self.results = camb.get_results(self.pars)
         # not sure where to put this
         self.c_kms = 2.998e5
-        self.lya_A = 1215.67
+        self.lya = 1215.67
         self.chi_z = lambda x: self.results.comoving_radial_distance(x) * self.h
         self.H_z = lambda x: self.results.hubble_parameter(x) / self.h
+        self.E_z = lambda x: self.H_z(x) / self.H_z(0)
         
 
     def LinPk_hMpc(self,kmin=1.0e-4,kmax=1.0e1,npoints=1000):
@@ -67,19 +68,19 @@ class Cosmology(object):
         #print('dMpc_drad',dMpc_drad)
         return dMpc_drad*np.pi/180.0*self.pars.H0/100.0
     
-    def V(self, z, area, dz):
+    def V(self, z, low_lambda, max_lambda, area, dz):
         """
         Takes in redshift, bin width and survey area and returns volume element of that ring Mpc^3 h^-3
         """
-        return self.L(z) * self.A(z, area) * dz
+        return self.L(z, low_lambda, max_lambda) * self.A(z, area) * dz
     
     def chi_trans(self,z):
         
         return self.chi_z(z) / (1+z)
     
     
-    def L(self,z):
-        return self.chi_z(z) - self.chi_z(1041/1185 *(z + 1) - 1)
+    def L(self,z, low_lambda, max_lambda):
+        return self.chi_z(z) - self.chi_z(low_lambda/max_lambda *(z + 1) - 1)
         
     def A(self, z, area):
         """

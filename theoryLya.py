@@ -96,5 +96,111 @@ class theoryLya(object):
         tau_eff = 2.53e-3 * (1+z)**3.7
         mean_F = np.exp(-tau_eff)
         return mean_F
+    
+    def PLE_Phi(self, Mg, z, Mg_star, Phi_star, alpha=-4.31, beta=-1.54):
+        """
+        Eq 6 in https://arxiv.org/pdf/1509.05607 with default values from Table 4
+        """
+
+        Phi = Phi_star / (10**(0.4*(alpha + 1)*(Mg - Mg_star)) + 10**(0.4*(beta + 1)*(Mg - Mg_star)))
+
+        return Phi
+    
+    def PLE_Mg_star(self, z, Mg_star_zp, zp=2.2, k1=0.08, k2=-0.40):
+        """
+        Eq 7 in https://arxiv.org/pdf/1509.05607 with default values from Table 4
+        """
+        Mg_star = Mg_star_zp - 2.5*(k1*(z - zp) + k2*(z - zp)**2)
+
+        return Mg_star
+
+    
+    def LEDE_Phi_star(self, z, Phi_star_zp, zp=2.2, c1a=-.14, c1b=0.32):
+        """
+        Eq 8 in https://arxiv.org/pdf/1509.05607 with default values from Table 4
+        Note: We exponentiate here instead of leaving log(Phi_star) as in the paper
+        """
+        log_Phi_star = np.log(Phi_star_zp) + c1a*(z - zp) + c1b*(z - zp)**2
+        
+        return np.exp(log_Phi_star)
+    
+    def LEDE_Mg_star(self, z, Mg_star_zp, c2, zp=2.2):
+        """
+        Eq 9 in https://arxiv.org/pdf/1509.05607 with default values from Table 4
+        """
+        return Mg_star_zp + c2 * (z - zp)
+    
+    def alpha(self, z, alpha_zp, c3=0.32, zp=2.2):
+        """
+        Eq 10 in https://arxiv.org/pdf/1509.05607 with default values from Table 4
+        """
+        return alpha_zp + c3 * (z - zp)
+    
+    def PLE_Only_Phi(self, Mg, z):
+        #for z = 0.68-4.0
+        Mg_star_zp = -26.71
+        log_Phi_star = -6.01
+        zp = 2.2
+        
+        if z >= 0.68 and z <= 2.2:
+            alpha = -4.31
+            beta = -1.54
+            k1 = -0.08
+            k2 = -0.40
+            
+            Mg_star = self.PLE_Mg_star(z, Mg_star_zp=Mg_star_zp, k1=k1, k2=k2)
+            return self.PLE_Phi(Mg, z, Mg_star=Mg_star, Phi_star=10**(log_Phi_star), alpha=alpha, beta=beta)
+        
+        if z > 2.2 and z <= 4:
+            alpha = -3.04
+            beta = -1.38
+            k1 = -0.25
+            k2 = -0.05
+            
+            Mg_star = self.PLE_Mg_star(z, Mg_star_zp=Mg_star_zp, k1=k1, k2=k2)
+            print(Mg_star)
+            print(10**(log_Phi_star))
+            return self.PLE_Phi(Mg, z, Mg_star=Mg_star, Phi_star=10**(log_Phi_star), alpha=alpha, beta=beta)
+        
+        
+        
+    def PLE_LEDE_Phi(self, Mg, z):
+        Mg_star_zero = -22.25
+        log_Phi_star_zero = -5.93
+        zp = 2.2
+        alpha = -3.89
+        beta = -1.47
+        
+        if z >= 0.68 and z <= 2.2:
+            k1 = 1.59
+            k2 = -0.36
+            
+            Mg_star = self.PLE_Mg_star(z, Mg_star_zp=Mg_star_zero, k1=k1, k2=k2, zp=0)
+            
+            return self.PLE_Phi(Mg, z, Mg_star=Mg_star, Phi_star=10**(log_Phi_star_zero), alpha=alpha, beta=beta)
+        
+        if z > 2.2 and z <= 4:
+            c1a = -0.46
+            c1b = -0.06
+            c2 = -0.14     
+            c3 = 0.32
+
+            alpha = self.alpha(z, alpha_zp=alpha, c3=c3, zp=2.2)
+
+            Phi_star = self.LEDE_Phi_star(z, Phi_star_zp=10**(log_Phi_star_zero), zp=0, c1a=c1a, c1b=c1b)
+            Mg_star = self.LEDE_Mg_star(z, Mg_star_zp=Mg_star_zero, c2=c2, zp=0)
+            print((Mg_star))
+            print(Phi_star)
+            return self.PLE_Phi(Mg, z, Mg_star=Mg_star, Phi_star=Phi_star, alpha=alpha, beta=beta)
+            
+            
+            
+        
+        
+        
+        
+        
+        
+        
         
     
