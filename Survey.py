@@ -13,11 +13,10 @@ class Survey(object):
     nzr file: gives the number density of quasars per sq degree as a function of redshift and z """ #ADD QLF functionality later
     
     
-    def __init__(self, from_file=1, snr_list='./lya-snr-guadalupe.fits', nzr_file='./nzs/nzr_qso.dat', survey_A=16000, z_range=None, r_range=None, dz=0.2):
+    def __init__(self, from_file=1, snr_list='./lya-snr-guadalupe.fits', nzr_file='./nzs/nzr_qso.dat', k_corr='mcgreer2013', survey_A=16000, z_range=None, r_range=None, dz=0.2):
         
         self.low_lambda = 1041
         self.high_lambda = 1185
-        
         if from_file==1:
             x = np.genfromtxt(nzr_file, skip_header=3)
             self.nzr_temp = x[:,2]
@@ -66,4 +65,29 @@ class Survey(object):
             n, bin_edges = np.histogram(self.zs, self.z_edges)
             
             self.nzr = n[:,None] / self.surveyArea / self.dz / self.dr
+            
+        self.k_corr = self.get_k_corr(paper=k_corr)
     
+    def get_k_corr(self, paper='mcgreer2013'):
+        paper_low = paper.lower()
+        k_correction = np.zeros
+        
+        if (paper_low == "mcgreer2013") or (paper_low == 'mcgreer'):
+            k_correction = np.loadtxt('k-correction_McGreer2013.txt')
+            
+            z = k_correction[:,0]
+            k_corr = k_correction[:,1]
+
+            k_corr_func = interp.interp1d(z, k_corr, bounds_error=False)
+
+            return k_corr_func
+            
+        if (paper_low == "croom2009") or (paper_low == 'croom'):
+            k_correction = np.loadtxt('k-correction_Croom2009.txt')
+        
+            z = k_correction[:,0]
+            k_corr = k_correction[:,1]
+
+            k_corr_func = interp.interp1d(z, k_corr, bounds_error=False)
+
+            return k_corr_func
