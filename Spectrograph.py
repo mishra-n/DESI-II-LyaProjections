@@ -73,6 +73,7 @@ class Spectrograph(object):
     def P_Nn(self, t, r, z, SNR=None):
         """
         Eq 3 in McQuinn, White (2011): Noise power calculated from SNR per pixel as function of redshift and mean flux
+        Note: k, mu independent Pn means that the derivatives evaluate to zero.
         """
         
         if SNR is None:

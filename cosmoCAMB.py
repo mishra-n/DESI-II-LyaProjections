@@ -72,7 +72,7 @@ class Cosmology(object):
         """
         Takes in redshift, bin width and survey area and returns volume element of that ring Mpc^3 h^-3
         """
-        return self.L(z, low_lambda, max_lambda) * self.A(z, area) * dz
+        return (4*np.pi/3) * self.L(z, low_lambda, max_lambda) * self.A(z, area) * dz
     
     def chi_trans(self,z):
         
@@ -91,5 +91,5 @@ class Cosmology(object):
         return (self.chi_trans(z) * np.sqrt(area) * np.pi / 180)**2
         
     def dVdivdz(self, z, area):
-        return ((1+z)**2 * 3 * self.chi_z(z)**2 * self.c_kms / self.H_z(z) - self.chi_z(z)**3 * 2 * (1+z))/(1+z)**4
+        return (4*np.pi/3) * ((1+z)**2 * 3 * self.chi_z(z)**2 * self.c_kms / self.H_z(z) - self.chi_z(z)**3 * 2 * (1+z))/(1+z)**4
 

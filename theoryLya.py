@@ -6,6 +6,7 @@ import helper as helper
 import numpy as np
 import scipy.integrate as integrate
 import scipy.interpolate as interp
+import scipy.misc as misc
 
 def meanFlux(z):
     """
@@ -35,6 +36,8 @@ class theoryLya(object):
         self.kmin=1.0e-4
         self.kmax=1.0e2
         self.linPk = self.cosmo.LinPk_hMpc(self.kmin,self.kmax,1000)
+
+#################### 1D and 3D PS DEFINITIONS ######################
 
     def FluxP3D_McD2003_hMpc(self,z,k_hMpc,mu,linear=False):
         """3D power spectrum P_F(z,k,mu). 
@@ -91,11 +94,33 @@ class theoryLya(object):
             
             p1d[i] = integrate.quad(integrand, 0, np.inf)[0]
         return p1d
+
+#################### 1D and 3D PS DERIVATIVE DEFINITIONS ######################
     
+    def dP3Ddk(self, z, k_hMpc, mu, linear=False, dlnk=0.00001):
+        
+        P3D = lambda x: self.FluxP3D_McD2003_hMpc(z=z,k_hMpc=np.exp(x),mu=mu,linear=linear)
+        
+        dPdlnk = misc.derivative(P3D, np.log(k_hMpc), order=5, dx=dlnk)
+        
+        return dPdlnk/k_hMpc
+
+    def dP3Ddmu(self, z, k_hMpc, mu, linear=False, dmu=0.00001):
+        
+        P3D = lambda x: self.FluxP3D_McD2003_hMpc(z,k_hMpc,x,linear=linear)
+        
+        dPdmu = misc.derivative(P3D, mu, order=5, dx=dmu)
+        
+        return dPdmu
+    
+####################  ######################
+
     def meanFlux(self, z):
         tau_eff = 2.53e-3 * (1+z)**3.7
         mean_F = np.exp(-tau_eff)
         return mean_F
+    
+#################### QLF FUNCTION DEFINITIONS ######################
     
     def PLE_Phi(self, Mg, z, Mg_star, Phi_star, alpha=-4.31, beta=-1.54):
         """
@@ -164,34 +189,33 @@ class theoryLya(object):
         
         
         
-    def PLE_LEDE_Phi(self, Mg, z):
-        Mg_star_zero = -22.25
-        log_Phi_star_zero = -5.93
-        zp = 2.2
-        alpha = -3.89
-        beta = -1.47
+#    def PLE_LEDE_Phi(self, Mg, z):
+#        Mg_star_zero = -22.25
+#        log_Phi_star_zero = -5.93
+#        zp = 2.2
+#        alpha = -3.89
+#        beta = -1.47
         
-        if z >= 0.68 and z <= 2.2:
-            k1 = 1.59
-            k2 = -0.36
+#        if z >= 0.68 and z <= 2.2:
+#            k1 = 1.59
+#            k2 = -0.36
+#            
+#            Mg_star = self.PLE_Mg_star(z, Mg_star_zp=Mg_star_zero, k1=k1, k2=k2, zp=0)
             
-            Mg_star = self.PLE_Mg_star(z, Mg_star_zp=Mg_star_zero, k1=k1, k2=k2, zp=0)
-            
-            return self.PLE_Phi(Mg, z, Mg_star=Mg_star, Phi_star=10**(log_Phi_star_zero), alpha=alpha, beta=beta)
+#            return self.PLE_Phi(Mg, z, Mg_star=Mg_star, Phi_star=10**(log_Phi_star_zero), alpha=alpha, beta=beta)
         
-        if z > 2.2 and z <= 4:
-            c1a = -0.46
-            c1b = -0.06
-            c2 = -0.14     
-            c3 = 0.32
+#        if z > 2.2 and z <= 4:
+#            c1a = -0.46
+#            c1b = -0.06
+#            c2 = -0.14     
+#            c3 = 0.32
 
-            alpha = self.alpha(z, alpha_zp=alpha, c3=c3, zp=2.2)
+#            alpha = self.alpha(z, alpha_zp=alpha, c3=c3, zp=2.2)
 
-            Phi_star = self.LEDE_Phi_star(z, Phi_star_zp=10**(log_Phi_star_zero), zp=0, c1a=c1a, c1b=c1b)
-            Mg_star = self.LEDE_Mg_star(z, Mg_star_zp=Mg_star_zero, c2=c2, zp=0)
-            print((Mg_star))
-            print(Phi_star)
-            return self.PLE_Phi(Mg, z, Mg_star=Mg_star, Phi_star=Phi_star, alpha=alpha, beta=beta)
+#            Phi_star = self.LEDE_Phi_star(z, Phi_star_zp=10**(log_Phi_star_zero), zp=0, c1a=c1a, c1b=c1b)
+#            Mg_star = self.LEDE_Mg_star(z, Mg_star_zp=Mg_star_zero, c2=c2, zp=0)
+
+#            return self.PLE_Phi(Mg, z, Mg_star=Mg_star, Phi_star=Phi_star, alpha=alpha, beta=beta)
             
             
             

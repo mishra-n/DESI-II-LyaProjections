@@ -18,6 +18,9 @@ class Survey(object):
         self.low_lambda = 1041
         self.high_lambda = 1185
         if from_file==1:
+            """
+            All stuff the utilize the z and r bins provided by the files. This can all be reworked to fit your needs. In the end you need and n(z,r) where the first dimension lists the zs and the second dimension lists the rs, and the value at the coordinate is the number density within the bin.
+            """
             x = np.genfromtxt(nzr_file, skip_header=3)
             self.nzr_temp = x[:,2]
             self.zs = x[:,0]
@@ -35,7 +38,10 @@ class Survey(object):
             self.dz = self.z_bins[1] - self.z_bins[0]
             self.dr = self.r_bins[1] - self.r_bins[0]
             
+            
+            """All of this n(z,r) stuff is specific to my use case. In reality all you should need is an input in the shape below"""
             self.nzr = np.zeros(shape=(self.z_bins.shape[0], self.r_bins.shape[0]))
+            
             for i, z_val in enumerate(self.z_bins):
                 for j, r_val in enumerate(self.r_bins):
                     self.nzr[i,j] = self.nzr_temp[np.logical_and(self.zs==z_val, self.rs==r_val)]
@@ -69,6 +75,10 @@ class Survey(object):
         self.k_corr = self.get_k_corr(paper=k_corr)
     
     def get_k_corr(self, paper='mcgreer2013'):
+        """
+        Pick between McGreer (2013) k-correction or Croom (2009) k-correction.
+        We use WebPlotDigitizer to extract from Figure 9 from  https://arxiv.org/pdf/1509.05607
+        """
         paper_low = paper.lower()
         k_correction = np.zeros
         
@@ -91,3 +101,9 @@ class Survey(object):
             k_corr_func = interp.interp1d(z, k_corr, bounds_error=False)
 
             return k_corr_func
+        
+    def g_mag_from_abs(self, Mg, z):
+        """
+        Equation 4 in https://arxiv.org/pdf/1509.05607
+        """
+        return Mg + dm(z) + (self.k_corr(z) - self.k_corr(z=2))
