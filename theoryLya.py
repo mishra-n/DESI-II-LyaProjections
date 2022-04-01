@@ -39,7 +39,7 @@ class theoryLya(object):
 
 #################### 1D and 3D PS DEFINITIONS ######################
 
-    def FluxP3D_McD2003_hMpc(self,z,k_hMpc,mu,linear=False):
+    def FluxP3D_McD2003_hMpc(self,z,k_hMpc,mu,linear=False, b_delta=np.sqrt(0.0173), beta=1.58):
         """3D power spectrum P_F(z,k,mu). 
 
             If linear=True, it will ignore small scale correction."""
@@ -97,7 +97,7 @@ class theoryLya(object):
 
 #################### 1D and 3D PS DERIVATIVE DEFINITIONS ######################
     
-    def dP3Ddk(self, z, k_hMpc, mu, linear=False, dlnk=0.00001):
+    def dP3Ddk(self, z, k_hMpc, mu, linear=False, b_delta=np.sqrt(0.0173), beta=1.58, dlnk=0.00001):
         
         P3D = lambda x: self.FluxP3D_McD2003_hMpc(z=z,k_hMpc=np.exp(x),mu=mu,linear=linear)
         
@@ -105,7 +105,7 @@ class theoryLya(object):
         
         return dPdlnk/k_hMpc
 
-    def dP3Ddmu(self, z, k_hMpc, mu, linear=False, dmu=0.00001):
+    def dP3Ddmu(self, z, k_hMpc, mu, linear=False, b_delta=np.sqrt(0.0173), beta=1.58, dmu=0.00001):
         
         P3D = lambda x: self.FluxP3D_McD2003_hMpc(z,k_hMpc,x,linear=linear)
         
@@ -113,6 +113,21 @@ class theoryLya(object):
         
         return dPdmu
     
+    def dP3Ddbeta(self, z, k_hMpc, mu, linear=False, b_delta=np.sqrt(0.0173), beta=1.58, dbeta=0.00001):
+        
+        P3D = lambda x: self.FluxP3D_McD2003_hMpc(z,k_hMpc,mu,linear=linear, beta=x)
+        
+        dPdbeta = misc.derivative(P3D, beta, order=5, dx=dbeta)
+        
+        return dPdbeta 
+    
+    def dP3Ddbdelta(self, z, k_hMpc, mu, linear=False, b_delta=np.sqrt(0.0173), beta=1.58, dbdelta=0.00001):
+        
+        P3D = lambda x: self.FluxP3D_McD2003_hMpc(z,k_hMpc,mu,linear=linear, b_delta=x)
+        
+        dPdbdelta = misc.derivative(P3D, b_delta, order=5, dx=dbdelta)
+        
+        return dPdbdelta
 ####################  ######################
 
     def meanFlux(self, z):

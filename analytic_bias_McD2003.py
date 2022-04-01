@@ -32,7 +32,7 @@ def D_hMpc_McD2003(k_hMpc,mu):
     texp = D_NL_hMpc(k_hMpc) - D_p_hMpc(k_hMpc) - D_v_hMpc(k_hMpc,mu)
     return np.exp(texp)
 
-def bias_hMpc_McD2003(k_hMpc,mu,linear=False):
+def bias_hMpc_McD2003(k_hMpc,mu,linear=False, b_delta=np.sqrt(0.0173), beta=1.58):
     """Analytic formula for scale-dependent bias of Lyman alpha P3D(z,k,mu) 
         from McDonald (2003), including Kaiser and small scale correction.  
         Basically, it return P_F(k,mu) / P_lin(k,mu)
