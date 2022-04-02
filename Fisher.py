@@ -67,7 +67,7 @@ class Fisher(object):
                 for i,k_val in enumerate(self.ks):
                     for j, mu_val in enumerate(self.mus):    
                         m = n - len(basis)
-                        derivatives[n, i, j, :] = (k_val**(2*(m//5)) * mu_val**(m%5))[None]
+                        derivatives[n, i, j, :] = (mu_val**(2*(m//5)) * k_val**(m%5))[None]
 
         return derivatives
     

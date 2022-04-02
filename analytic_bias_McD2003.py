@@ -39,10 +39,14 @@ def bias_hMpc_McD2003(k_hMpc,mu,linear=False, b_delta=np.sqrt(0.0173), beta=1.58
         Values computed at z=2.25, it would be great to have z-evolution.
         Values are cosmology dependent, but we ignore it here.
         If linear=True, return only Kaiser.
-        Wavenumbers in h/Mpc. """
+        Wavenumbers in h/Mpc. 
+        first row, table 1 in McDonald (2003)"""
+    
     # first row, table 1 in McDonald (2003)
-    b_delta=-np.sqrt(0.0173)
-    beta=1.58
+    #b_delta=-np.sqrt(0.0173)
+    #beta=1.58
+    
+    
     Kaiser=pow(b_delta*(1+beta*pow(mu,2)),2)
     if linear:
         return Kaiser

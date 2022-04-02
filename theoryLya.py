@@ -48,7 +48,7 @@ class theoryLya(object):
         k = np.fmin(k,self.kmax)
         P = self.linPk(k)
         # get flux scale-dependent biasing (or only linear term)
-        b = bM03.bias_hMpc_McD2003(k,mu,linear)
+        b = bM03.bias_hMpc_McD2003(k,mu,linear, b_delta=b_delta, beta=beta)
         # get (approximated) redshift evolution
         zevol = pow( (1+z)/(1+self.zref), 3.8)
         return P * b * zevol
