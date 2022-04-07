@@ -46,7 +46,6 @@ def bias_hMpc_McD2003(k_hMpc,mu,linear=False, b_delta=np.sqrt(0.0173), beta=1.58
     #b_delta=-np.sqrt(0.0173)
     #beta=1.58
     
-    
     Kaiser=pow(b_delta*(1+beta*pow(mu,2)),2)
     if linear:
         return Kaiser

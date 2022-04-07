@@ -1,6 +1,8 @@
 import helper
 import numpy as np
 import scipy.interpolate as interp
+import scipy.stats as stats
+from astropy.table import Table
 import theoryLya as tLya
 
 
@@ -19,7 +21,9 @@ class Spectrograph(object):
         if self.name is 'weave':
             self.snr = self.SNR()
             self.resolution = 2.6 #angstroms (Kraljic et al (2022), 2201.02606)
-            
+        if self.name is 'desi_guadalupe':
+            self.snr = self.SNR()
+            self.resolution = 1
             
         
 
@@ -37,7 +41,7 @@ class Spectrograph(object):
     def meanSNR(self, SNR, wavelengths, redshifts):
         mean_SNR = np.zeros(shape=redshifts.shape[0])
         for i,z in enumerate(redshifts):
-            selected_wavelengths = np.logical_and(1215*z < (wavelengths - 1215), 912*z < (wavelengths - 912))
+            selected_wavelengths = np.logical_and(1215*z > (wavelengths - 1215), 912*z < (wavelengths - 912))
             mean_SNR[i] = SNR[selected_wavelengths].mean()
 
         return mean_SNR, redshifts
@@ -51,7 +55,7 @@ class Spectrograph(object):
             SNR_arr = []
             for j, r in enumerate(rs):
                 for i, t in enumerate(ts):
-                    file_name = 'toto-r' + str(rs[j]) + '-t' + str(ts[i]) + '-nexp4.dat'
+                    file_name = 'toto-g' + str(rs[j]) + '-t' + str(ts[i]) + '-nexp' + str(int(t/1000)) + '.dat'
                     SNR_val, wavelengths, redshifts = self.openSNR(path + file_name)
                     mean_SNR, redshifts = self.meanSNR(SNR_val, wavelengths, redshifts)
                     SNR_arr = np.append(SNR_arr, mean_SNR)
@@ -67,7 +71,25 @@ class Spectrograph(object):
             f_snr_r = interp.interp1d(r, snr)
             
             SNR_func = lambda ts, rs, zs : f_snr_r(rs) * np.sqrt(ts)
-                    
+            
+        if self.name is 'desi_guadalupe':
+            tt=Table.read('lya-snr-guadalupe.fits')
+            rmag = -2.5*np.log10(tt['FLUX_R'])+22.5
+            values = np.array([tt['Z'], rmag])
+            z_range = np.arange(2,4.2, .3)
+            r_range = np.arange(19,23, .3)
+
+            z_centers = (z_range[1:] + z_range[:-1])/2
+            r_centers = (r_range[1:] + r_range[:-1])/2
+            
+            
+            
+            statistic, xedge, yedge, binnum = stats.binned_statistic_2d(values[0,:], values[1,:], np.array(tt['SNR']), statistic='mean', bins=[z_range, r_range])
+            
+            func = interp.interp2d(z_centers, r_centers, statistic.swapaxes(0,1), kind='linear', copy=True, bounds_error=False, fill_value=None)
+            
+            SNR_func = lambda ts, rs, zs: func(zs, rs) * np.sqrt(ts/4000)
+            
         return SNR_func
     
     def P_Nn(self, t, r, z, SNR=None):
@@ -77,8 +99,9 @@ class Spectrograph(object):
         """
         
         if SNR is None:
-            P_Nn = self.snr(t, r, z)**(-2) * self.resolution / self.theoryLya.cosmo.lya * self.theoryLya.cosmo.H_z(z) #* tLya.meanFlux(z)**(-2)
+            P_Nn = self.snr(t, r, z)**(-2) * self.resolution / self.theoryLya.cosmo.lya * self.theoryLya.cosmo.c / self.theoryLya.cosmo.H_z(z)
+            #* tLya.meanFlux(z)**(-2)
         else:
-            P_Nn = SNR**(-2) * self.resolution / self.theoryLya.cosmo.lya * self.theoryLya.cosmo.H_z(z)
+            P_Nn = SNR**(-2) * self.resolution / self.theoryLya.cosmo.lya * self.theoryLya.cosmo.c / self.theoryLya.cosmo.H_z(z)
 
         return P_Nn

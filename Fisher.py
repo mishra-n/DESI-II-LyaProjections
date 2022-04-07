@@ -35,10 +35,7 @@ class Fisher(object):
             return self.theoryLya.dP3Ddbeta(z, k_hMpc, mu, b_delta=b_delta, beta=beta)
         if theta == 'b_delta':
             return self.theoryLya.dP3Ddbdelta(z, k_hMpc, mu, b_delta=b_delta, beta=beta)
-        
-#    def dPdpoly(self, z, k_hMpc, mu, linear, order=1):
-#        return mu**(2*(order//5)) * k_hMpc**(order%5)
-
+    
     def Cov_prefactor(self):
         return (4.*np.pi**2.) / (self.dlnk*self.dmu*self.effectiveStatistics.surveyVolume[None,:]*self.ks[:,None]**3.)
     
@@ -58,7 +55,6 @@ class Fisher(object):
             print(n)
             for i,k_val in enumerate(self.ks):
                 for j, mu_val in enumerate(self.mus):
-                    #print(n,i,j)
                     derivatives[n, i, j, :] = self.dPdtheta(self.Survey.z_bins, k_val, mu_val, linear=False, theta=basis[n])
 
         if poly==True: 
@@ -87,27 +83,3 @@ class Fisher(object):
         Fisher_ab_tz = Fisher_ab_kmtz.sum(axis=2).sum(axis=2) #summing over all km pairs
         
         return Fisher_ab_tz
-                
-        
-                
-
-        
-        
-        
-    
-"""    
-    N = len(basis)
-    if self.recon and polys: N += 15
-    
-        for i in range(len(basis),N):
-               m = i - len(basis)         
-               derivatives[zbin_index,i] = self.mu**(2*(m//5)) * self.k**(m%5)
-        
-        
-        """
-        
-    
-          
-    
-    
-    
